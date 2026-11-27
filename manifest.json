@@ -1,0 +1,11 @@
+{
+  "name": "Phantasia",
+  "short_name": "Phantasia",
+  "description": "Ouve a conversa e examina a intenção e o tom por trás das palavras.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1b1530",
+  "theme_color": "#1b1530",
+  "lang": "pt-BR",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

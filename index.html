@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b1530">
+<title>Phantasia — examine a impressão antes de acreditar nela</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#1b1530; --card:#261f42; --line:#3a3160; --txt:#f2eefc; --mut:#a99fca;
+    --acc:#f5b942; --rec:#ff5a6a; --ok:#57d39a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--txt);
+       padding:16px 14px 40px;max-width:640px;margin-inline:auto;line-height:1.45}
+  h1{font-size:1.5rem;margin:4px 0 2px;letter-spacing:.5px}
+  h1 span{color:var(--acc)}
+  .sub{color:var(--mut);margin:0 0 14px;font-size:.92rem}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px}
+  .aviso{font-size:.82rem;color:var(--mut);border-left:3px solid var(--acc);padding-left:10px}
+  button{font:inherit;border:0;border-radius:12px;padding:12px 14px;cursor:pointer;color:#1b1530;background:var(--acc);font-weight:700}
+  button.sec{background:transparent;color:var(--txt);border:1px solid var(--line);font-weight:500}
+  button:disabled{opacity:.45}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .row>button{flex:1}
+  #btnRec{width:100%;font-size:1.1rem;padding:16px}
+  #btnRec.on{background:var(--rec);color:#fff;animation:pulse 1.4s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 10px rgba(255,90,106,.15)}}
+  #status{font-size:.85rem;color:var(--mut);margin:8px 0 0;min-height:1.2em}
+  textarea,input{width:100%;background:#15102a;color:var(--txt);border:1px solid var(--line);border-radius:12px;padding:12px;font:inherit}
+  textarea{min-height:170px;resize:vertical}
+  label{font-size:.85rem;color:var(--mut);display:block;margin-bottom:6px}
+  .interim{color:var(--mut);font-style:italic;font-size:.9rem;min-height:1.2em;margin-top:6px}
+  .geral{font-size:1.15rem;font-weight:700;margin:0 0 6px}
+  .tom{margin:12px 0}
+  .tom-top{display:flex;justify-content:space-between;font-weight:600}
+  .bar{height:9px;background:#15102a;border-radius:9px;overflow:hidden;margin:5px 0}
+  .bar i{display:block;height:100%;border-radius:9px}
+  .trecho{font-size:.85rem;color:var(--mut)}
+  .trecho q{color:var(--txt)}
+  .tag{display:inline-block;font-size:.75rem;padding:2px 8px;border-radius:20px;border:1px solid var(--line);color:var(--mut);margin-bottom:8px}
+  details summary{cursor:pointer;color:var(--mut)}
+  .hist-item{border-top:1px solid var(--line);padding:8px 0;font-size:.88rem;cursor:pointer}
+  footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:20px}
+</style>
+</head>
+<body>
+
+<h1>Phan<span>tasia</span></h1>
+<p class="sub">Ouve a conversa e examina a intenção e o tom por trás das palavras.</p>
+<p class="sub" style="font-style:italic;margin-top:-8px">“Você é apenas uma impressão, e não aquilo que parece ser.” — Epicteto</p>
+
+<div class="card aviso">
+  🔒 O áudio <b>não é gravado nem enviado</b>: só o texto transcrito fica no seu celular.
+  Avise as pessoas que você está usando o app. O resultado é uma <b>leitura possível</b>, não uma verdade:
+  tom de voz, contexto e intimidade mudam tudo.
+</div>
+
+<!-- 1. OUVIR -->
+<div class="card">
+  <button id="btnRec">🎙️ Começar a ouvir</button>
+  <p id="status"></p>
+  <div class="interim" id="interim"></div>
+</div>
+
+<!-- 2. TEXTO -->
+<div class="card">
+  <label for="texto">Conversa (pode editar, ou colar uma conversa do WhatsApp)</label>
+  <textarea id="texto" placeholder="Ex.: — Nossa, parabéns, hein... nem todo mundo tem essa sorte, né?"></textarea>
+  <div class="row" style="margin-top:10px">
+    <button id="btnAnalisar">🔍 Analisar intenção</button>
+    <button class="sec" id="btnLimpar">Limpar</button>
+  </div>
+</div>
+
+<!-- 3. RESULTADO -->
+<div class="card" id="resultado" hidden></div>
+
+<!-- 4. CONFIG + HISTÓRICO -->
+<div class="card">
+  <details>
+    <summary>⚙️ Configurações (análise com IA)</summary>
+    <p class="trecho">Sem chave, o app usa uma análise simples por palavras (funciona offline).
+      Com uma chave da API do Claude, a análise entende ironia e contexto muito melhor.
+      A chave fica salva só neste aparelho.</p>
+    <label for="chave">Chave da API (API key) — console.anthropic.com</label>
+    <input id="chave" type="password" placeholder="sk-ant-..." autocomplete="off">
+    <div class="row" style="margin-top:8px">
+      <button class="sec" id="btnSalvarChave">Salvar chave</button>
+      <button class="sec" id="btnApagarChave">Apagar chave</button>
+    </div>
+  </details>
+</div>
+
+<div class="card">
+  <details>
+    <summary>🕘 Histórico</summary>
+    <div id="historico"></div>
+    <button class="sec" id="btnApagarHist" style="margin-top:8px;width:100%">Apagar histórico</button>
+  </details>
+</div>
+
+<footer>Phantasia · criado por Jamile Dias (Mel) · JD 110</footer>
+
+<script>
+/* ========= utilidades ========= */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const CORES = {
+  "ironia":"#f5b942","sarcasmo":"#f5b942","inveja":"#8bd450","orgulho":"#c48bff","arrogância":"#c48bff",
+  "maldade":"#ff5a6a","hostilidade":"#ff5a6a","raiva":"#ff7b54","paz":"#57d39a","carinho":"#ff9ecd",
+  "tristeza":"#6fa8ff","medo":"#9aa4c8","manipulação":"#e0607e","admiração":"#57d3c8","neutro":"#a99fca"
+};
+const cor = n => CORES[(n||"").toLowerCase()] || "#a99fca";
+
+/* ========= 1. OUVIR (reconhecimento de voz do navegador) ========= */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, ouvindo = false;
+
+if (!SR) {
+  $("btnRec").disabled = true;
+  $("status").textContent = "Este navegador não transcreve voz. Use o Google Chrome no Android, ou cole o texto abaixo.";
+} else {
+  rec = new SR();
+  rec.lang = "pt-BR";
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onresult = e => {
+    let parcial = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const t = e.results[i][0].transcript.trim();
+      if (e.results[i].isFinal) {
+        $("texto").value += (($("texto").value && !$("texto").value.endsWith("\n")) ? "\n" : "") + "— " + t;
+        salvarRascunho();
+      } else parcial += t + " ";
+    }
+    $("interim").textContent = parcial;
+  };
+  rec.onerror = e => {
+    if (e.error === "not-allowed") { pararOuvir(); $("status").textContent = "Permissão do microfone negada. Libere nas configurações do navegador."; }
+    else if (e.error !== "no-speech") $("status").textContent = "Aviso: " + e.error;
+  };
+  // o navegador para sozinho depois de um tempo: reinicia enquanto estiver ligado
+  rec.onend = () => { if (ouvindo) { try { rec.start(); } catch(_){} } };
+}
+
+function comecarOuvir(){
+  try { rec.start(); } catch(_){}
+  ouvindo = true;
+  $("btnRec").classList.add("on");
+  $("btnRec").textContent = "⏹️ Parar de ouvir";
+  $("status").textContent = "Ouvindo… mantenha a tela ligada e o app aberto.";
+  if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then(l => window._lock = l).catch(()=>{});
+}
+function pararOuvir(){
+  ouvindo = false;
+  try { rec && rec.stop(); } catch(_){}
+  $("btnRec").classList.remove("on");
+  $("btnRec").textContent = "🎙️ Começar a ouvir";
+  $("status").textContent = "Parado. Agora toque em “Analisar intenção”.";
+  $("interim").textContent = "";
+  if (window._lock) { window._lock.release(); window._lock = null; }
+}
+$("btnRec").onclick = () => ouvindo ? pararOuvir() : comecarOuvir();
+
+/* ========= 2. TEXTO ========= */
+function salvarRascunho(){ store.set("rascunho", $("texto").value); }
+$("texto").value = store.get("rascunho", "");
+$("texto").addEventListener("input", salvarRascunho);
+$("btnLimpar").onclick = () => { $("texto").value = ""; salvarRascunho(); $("resultado").hidden = true; };
+
+/* ========= 3a. ANÁLISE LOCAL (offline, por palavras) ========= */
+const PISTAS = {
+  "Ironia": ["claro, né","claro né","aham","imagina","tá bom então","ta bom entao","parabéns, hein","nossa, que","grande coisa","que novidade","jura?","sério?","uau","olha só quem","como se","óbvio que","só que não","que bonito"],
+  "Inveja": ["sorte sua","queria eu","até você","nem todo mundo","não é pra qualquer","fácil pra você","deve ser bom","tem gente que","quem dera","pra você é fácil","caiu do céu","não fez nada"],
+  "Orgulho": ["eu sempre","eu já sabia","eu avisei","melhor que","eu consegui","ninguém faz","só eu","eu nunca erro","sou o único","sou a única","modéstia","eu mereço"],
+  "Maldade": ["bem feito","se ferrou","burra","burro","idiota","ridícul","inútil","fracassad","ninguém gosta","quem você pensa","se enxerga","otári","merece sofrer","tomara que"],
+  "Raiva": ["chega","cansei","não aguento","odeio","que saco","para com isso","me irrita","de novo isso","sempre a mesma"],
+  "Manipulação": ["se você me amasse","depois de tudo que","você me deve","ninguém vai te","só eu te","você é louca","você é louco","você exagera","isso nunca aconteceu","a culpa é sua"],
+  "Paz": ["obrigad","que bom","fico feliz","conte comigo","tudo bem","tranquilo","de boa","calma","entendo você","entendo","sem problema","fica em paz"],
+  "Carinho": ["te amo","amo você","saudade","querida","querido","meu bem","orgulho de você","você merece","linda","lindo","um abraço","cuida"],
+  "Tristeza": ["triste","sozinh","chorei","chorando","perdi","não sei mais","desanimad","cansad","dói","magoad"]
+};
+function analisarLocal(texto){
+  const t = texto.toLowerCase();
+  const linhas = texto.split(/\n+/).filter(Boolean);
+  const tons = [];
+  for (const [nome, lista] of Object.entries(PISTAS)) {
+    let pontos = 0, achados = [];
+    for (const p of lista) {
+      const n = t.split(p).length - 1;
+      if (n) { pontos += n; achados.push(p); }
+    }
+    if (nome === "Ironia") pontos += (texto.match(/\.\.\.|!\?|\?!|kkk|rsrs/gi) || []).length * 0.5;
+    if (pontos > 0) {
+      const linha = linhas.find(l => achados.some(a => l.toLowerCase().includes(a))) || "";
+      tons.push({ nome, intensidade: Math.min(100, Math.round(25 + pontos * 20)),
+        trecho: linha.slice(0, 140), explicacao: achados.length ? "Pistas: " + achados.slice(0,4).join(", ") : "Pontuação sugere duplo sentido." });
+    }
+  }
+  tons.sort((a,b) => b.intensidade - a.intensidade);
+  const top = tons[0];
+  return {
+    modo: "local",
+    intencao_geral: top ? "Predomina: " + top.nome.toLowerCase() : "Conversa neutra (sem pistas fortes)",
+    resumo: top ? "Análise simples por palavras-chave. Ironia e contexto podem enganar esse modo." : "Não encontrei palavras que indiquem um tom específico.",
+    tons: tons.length ? tons : [{nome:"Neutro", intensidade:50, trecho:"", explicacao:"Sem pistas."}],
+    dica: "Para uma leitura mais precisa (ironia, indiretas, contexto), coloque a chave da API nas Configurações."
+  };
+}
+
+/* ========= 3b. ANÁLISE COM IA (Claude) ========= */
+async function analisarIA(texto, chave){
+  const prompt = `Você analisa conversas em português do Brasil para dizer a intenção e o tom por trás das falas.
+A conversa foi transcrita por voz (pode ter erros e não indica quem fala; cada linha começa com "—").
+Seja equilibrado: não invente maldade onde não há, aponte ambiguidade quando houver.
+
+Responda SOMENTE com JSON válido neste formato:
+{
+ "intencao_geral": "frase curta com a intenção principal da conversa",
+ "resumo": "2 a 3 frases explicando o clima da conversa",
+ "tons": [ {"nome":"Ironia|Inveja|Orgulho|Maldade|Raiva|Manipulação|Paz|Carinho|Tristeza|Medo|Admiração|Neutro",
+            "intensidade": 0-100, "trecho":"citação curta da conversa", "explicacao":"por que"} ],
+ "dica": "uma sugestão prática de como responder ou o que observar"
+}
+Liste de 1 a 5 tons, do mais forte ao mais fraco.
+
+CONVERSA:
+${texto}`;
+
+  const r = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": chave,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({ model: "claude-sonnet-5-5", max_tokens: 1200, messages: [{ role: "user", content: prompt }] })
+  });
+  if (!r.ok) throw new Error("API respondeu " + r.status + ": " + (await r.text()).slice(0, 200));
+  const d = await r.json();
+  const bruto = d.content.map(c => c.text || "").join("");
+  const json = JSON.parse(bruto.slice(bruto.indexOf("{"), bruto.lastIndexOf("}") + 1));
+  json.modo = "ia";
+  return json;
+}
+
+/* ========= mostrar resultado ========= */
+function mostrar(res){
+  const box = $("resultado");
+  box.hidden = false;
+  box.innerHTML = `
+    <span class="tag">${res.modo === "ia" ? "✨ Análise com IA" : "📘 Análise simples (offline)"}</span>
+    <p class="geral">${esc(res.intencao_geral)}</p>
+    <p class="trecho">${esc(res.resumo)}</p>
+    ${(res.tons||[]).map(t => `
+      <div class="tom">
+        <div class="tom-top"><span>${esc(t.nome)}</span><span>${Number(t.intensidade)||0}%</span></div>
+        <div class="bar"><i style="width:${Math.max(3, Math.min(100, Number(t.intensidade)||0))}%;background:${cor(t.nome)}"></i></div>
+        ${t.trecho ? `<div class="trecho"><q>${esc(t.trecho)}</q></div>` : ""}
+        <div class="trecho">${esc(t.explicacao)}</div>
+      </div>`).join("")}
+    ${res.dica ? `<p class="aviso">💡 ${esc(res.dica)}</p>` : ""}`;
+  box.scrollIntoView({ behavior: "smooth" });
+}
+
+$("btnAnalisar").onclick = async () => {
+  const texto = $("texto").value.trim();
+  if (texto.length < 8) { alert("Escreva ou grave uma conversa primeiro."); return; }
+  if (ouvindo) pararOuvir();
+  const chave = store.get("chave", "");
+  $("btnAnalisar").disabled = true; $("btnAnalisar").textContent = "Analisando…";
+  let res;
+  try {
+    res = chave ? await analisarIA(texto, chave) : analisarLocal(texto);
+  } catch (e) {
+    res = analisarLocal(texto);
+    res.dica = "A IA falhou (" + e.message + "). Mostrando a análise simples.";
+  }
+  mostrar(res);
+  const hist = store.get("historico", []);
+  hist.unshift({ data: new Date().toLocaleString("pt-BR"), texto, res });
+  store.set("historico", hist.slice(0, 30));
+  desenharHistorico();
+  $("btnAnalisar").disabled = false; $("btnAnalisar").textContent = "🔍 Analisar intenção";
+};
+
+/* ========= configurações e histórico ========= */
+$("chave").value = store.get("chave", "");
+$("btnSalvarChave").onclick = () => { store.set("chave", $("chave").value.trim()); alert("Chave salva neste aparelho."); };
+$("btnApagarChave").onclick = () => { store.set("chave", ""); $("chave").value = ""; alert("Chave apagada."); };
+
+function desenharHistorico(){
+  const hist = store.get("historico", []);
+  $("historico").innerHTML = hist.length ? hist.map((h,i) =>
+    `<div class="hist-item" data-i="${i}"><b>${esc(h.data)}</b> — ${esc(h.res.intencao_geral)}</div>`).join("")
+    : `<p class="trecho">Nada ainda.</p>`;
+  document.querySelectorAll(".hist-item").forEach(el => el.onclick = () => {
+    const h = store.get("historico", [])[el.dataset.i];
+    $("texto").value = h.texto; mostrar(h.res);
+  });
+}
+$("btnApagarHist").onclick = () => { if (confirm("Apagar todo o histórico?")) { store.set("historico", []); desenharHistorico(); } };
+desenharHistorico();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
